@@ -75,7 +75,7 @@ class Vectorizer():
     #    return one_hot
 
 #Vectorizer class verification
-#df = pd.read_csv('data/test.txt', sep = ';', names = ['Sentence', 'Emotion'])
+#df = pd.read_csv('../data/test.txt', sep = ';', names = ['Sentence', 'Emotion'])
 #vec = Vectorizer.from_dataframe(df)
 #v = vec.vectorize('do you have any specific plan to do that')
 #print(v.shape)
@@ -107,7 +107,7 @@ class dataset(Dataset):
 
 
 #dataset class verification
-#df = pd.read_csv('data/test.txt', sep = ';', names = ['Sentence', 'Emotion'])
+#df = pd.read_csv('../data/test.txt', sep = ';', names = ['Sentence', 'Emotion'])
 #dataset_df = dataset(df)
 #dataloader_df = DataLoader(dataset_df, batch_size = 64, drop_last = False)
 #for data in dataloader_df:
@@ -154,9 +154,9 @@ def predict(sentence, emotion):
 
 if __name__ == '__main__':
 
-    training_set = dataset(pd.read_csv('data/train.txt', sep = ';', names = ['Sentence', 'Emotion']))
-    val_set = dataset(pd.read_csv('data/val.txt', sep = ';', names = ['Sentence', 'Emotion']), split = 'val', train_vectorizer = training_set.vectorizer)
-    test_set = dataset(pd.read_csv('data/test.txt', sep = ';', names = ['Sentence', 'Emotion']), split = 'test', train_vectorizer = training_set.vectorizer)
+    training_set = dataset(pd.read_csv('../data/train.txt', sep = ';', names = ['Sentence', 'Emotion']))
+    val_set = dataset(pd.read_csv('../data/val.txt', sep = ';', names = ['Sentence', 'Emotion']), split = 'val', train_vectorizer = training_set.vectorizer)
+    test_set = dataset(pd.read_csv('../data/test.txt', sep = ';', names = ['Sentence', 'Emotion']), split = 'test', train_vectorizer = training_set.vectorizer)
 
     net = Net(input_features = len(training_set.vectorizer.sentences_vocab.token_to_idx), output_features = len(training_set.vectorizer.emotions_vocab.token_to_idx))
     loss_fn = nn.CrossEntropyLoss()
