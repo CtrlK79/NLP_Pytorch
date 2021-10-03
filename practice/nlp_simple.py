@@ -164,68 +164,72 @@ if __name__ == '__main__':
 
     epochs = 5
     batch_size = 128
+    running_loss = 0.0
+    running_acc = 0.0
 
+    #epoch_bar = tqdm(desc = 'epochs', total = epochs, position = 0)
+    #batch_training_bar = tqdm(desc = 'training batch', total = len(training_set.df) // batch_size, position = 0)
+    #batch_val_bar = tqdm(desc = 'val batch', total = len(val_set.df) // batch_size, position = 0)
+    with tqdm(total = epochs, desc = 'epochs') as epoch_bar:
+        for epoch in range(epochs):
 
+            dataloader = DataLoader(training_set, batch_size = batch_size, drop_last = True)
 
+            running_loss = 0.0
+            running_acc = 0.0
+            loop = 0
+            net.train()
 
-    epoch_bar = tqdm(desc = 'epochs', total = epochs)
-    for epoch in range(epochs):
+            with tqdm(desc = 'training batch', total = len(training_set.df) // batch_size) as batch_training_bar:
+                for batch in dataloader:
+                    loop += 1
 
-        dataloader = DataLoader(training_set, batch_size = batch_size, drop_last = True)
+                    optim.zero_grad()
 
-        running_loss = 0.0
-        running_acc = 0.0
-        loop = 0
-        net.train()
+                    y_pred = net(batch['x_data'])
 
-        batch_training_bar = tqdm(desc = 'training batch', total = len(training_set.df) // batch_size)
-        for batch in dataloader:
-            loop += 1
+                    loss = loss_fn(y_pred, batch['y_target'])
+                    acc = int((y_pred.max(axis = 1)[1] == batch['y_target']).sum()) / len(batch['y_target'])
 
-            optim.zero_grad()
+                    loss.backward()
 
-            y_pred = net(batch['x_data'])
+                    optim.step()
 
-            loss = loss_fn(y_pred, batch['y_target'])
-            acc = int((y_pred.max(axis = 1)[1] == batch['y_target']).sum()) / len(batch['y_target'])
+                    running_loss = running_loss + (loss - running_loss) / loop
+                    running_acc = running_acc + (acc - running_acc) / loop
 
-            loss.backward()
+                    batch_training_bar.set_postfix(loss = float(running_loss), acc = float(running_acc), epoch = epoch)
+                    batch_training_bar.update()
 
-            optim.step()
+            dataloader = DataLoader(val_set, batch_size = batch_size, drop_last = True)
 
-            running_loss = (running_loss * (loop - 1) + loss) / loop
-            running_acc = (running_acc * (loop - 1) + acc)
+            running_loss = 0.0
+            running_acc = 0.0
+            loop = 0
+            net.eval()
 
-            batch_training_bar.update(1)
-            batch_training_bar.set_description("loss: {l}, acc: {a}".format(l = running_loss, a = running_acc))
+            with tqdm(desc = 'val batch', total = len(val_set.df) // batch_size) as batch_val_bar:
+                for batch in dataloader:
+                    loop += 1
 
-        dataloader = DataLoader(val_set, batch_size = batch_size, drop_last = True)
+                    y_pred = net(batch['x_data'])
 
-        running_loss = 0.0
-        running_acc = 0.0
-        loop = 0
-        net.eval()
+                    loss = loss_fn(y_pred, batch['y_target'])
+                    acc = int((y_pred.max(axis = 1)[1] == batch['y_target']).sum()) / len(batch['y_target'])
 
-        batch_val_bar = tqdm(desc = 'validation batch', total = len(val_set.df) // batch_size)
-        for batch in dataloader:
-            loop += 1
+                    running_loss = running_loss + (loss - running_loss) / loop
+                    running_acc = running_acc + (acc - running_acc) / loop
 
-            y_pred = net(batch['x_data'])
+                    batch_val_bar.set_postfix(loss = float(running_loss), acc = float(running_acc), epoch = epoch)
+                    batch_val_bar.update()
 
-            loss = loss_fn(y_pred, batch['y_target'])
-            acc = int((y_pred.max(axis = 1)[1] == batch['y_target']).sum()) / len(batch['y_target'])
+            epoch_bar.update()
 
-            running_loss = (running_loss * (loop-1) + loss) / loop
-            running_acc = (running_acc * (loop - 1) + acc) / loop
-
-            batch_val_bar.update(1)
-            batch_val_bar.set_description("loss: {l}, acc: {a}".format(l = running_loss, a = running_acc))
-
-        epoch_bar.update(1)
 
     epoch_bar.clear()
     batch_training_bar.clear()
     batch_val_bar.clear()
+
     torch.save(net.state_dict(), 'net.pth')
 
     predict('i love you hyejun', 'love')
