@@ -4,22 +4,27 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from collections import Counter
 
-class Vocabulary():
-    def __init__(self, token_to_idx = {}, add_unk = True, unk_token = '<UNK>'):
+class Vocabulary(object):
+    def __init__(self, token_to_idx = None, add_unk = True, unk_token = '<UNK>'):
+        if token_to_idx is None:
+            token_to_idx = {}
+
         self.token_to_idx = token_to_idx
         self.add_unk = add_unk
         self.unk_token = unk_token
+
         if self.add_unk:
             self.token_to_idx[self.unk_token] = 0
-        self.idx_to_token = {idx : token for token, idx in token_to_idx.items()}
+        self.idx_to_token = {idx : token for token, idx in self.token_to_idx.items()}
 
     def add_token(self, token):
         if token in self.token_to_idx:
-            return self.token_to_idx[token]
+            index = self.token_to_idx[token]
         else:
-            self.token_to_idx[token] = len(self.token_to_idx)
-            self.idx_to_token[len(self.idx_to_token)] = token
-            return self.token_to_idx[token]
+            index = len(self.token_to_idx)
+            self.token_to_idx[token] = index
+            self.idx_to_token[index] = token
+        return index
 
     def add_many(self, tokens):
         return [self.add_token(token) for token in tokens.split(" ")]
@@ -42,42 +47,45 @@ class Vocabulary():
         return cls(**serializable)
 
 #Debugging
-#voc = Vocabulary("hi my name is jaewoo nice to meet")
+#voc = Vocabulary()
 #voc.add_token("you")
 #voc.add_many('i love nlp study club')
 #print(voc.idx_to_token)
 
-class Vectorizer():
-    def __init__(self, sentences_vocab = Vocabulary(), emotions_vocab = Vocabulary(add_unk = False)):
+class Vectorizer(object):
+    def __init__(self, sentences_vocab, emotions_vocab):
         self.sentences_vocab = sentences_vocab
         self.emotions_vocab = emotions_vocab
 
     @classmethod
-    def from_dataframe(cls, df, count = 5):
+    def from_dataframe(cls, df, count = 3):
+        train_dataset = df.loc[df['split']=='train', :]
+
         sentences_vocab = Vocabulary()
         emotions_vocab = Vocabulary(add_unk = False)
 
+        for emotion in sorted(set(train_dataset.Emotion)):
+            emotions_vocab.add_token(emotion)
+
         counter = Counter()
-        for data in df.loc[:, 'Sentence']:
-            for token in data.split(" "):
+        for sentence in train_dataset.Sentence:
+            for token in sentence.split(" "):
                 counter[token] += 1
+
         for token, num in counter.items():
-            if num > count:
+            if num >= count:
                 sentences_vocab.add_token(token)
 
-        for data in df.loc[:, 'Emotion']:
-            emotions_vocab.add_many(data)
-
-        return cls(sentences_vocab = sentences_vocab, emotions_vocab = emotions_vocab)
+        return cls(sentences_vocab, emotions_vocab)
 
     def vectorize(self, sentence):
         one_hot = np.zeros(len(self.sentences_vocab.token_to_idx), dtype = np.float32)
 
         for word in sentence.split(" "):
             if word in self.sentences_vocab.token_to_idx:
-                one_hot[self.sentences_vocab.token_to_idx[word]] = 1
+                one_hot[self.sentences_vocab.lookup_token(word)] = 1
             else:
-                one_hot[self.sentences_vocab.token_to_idx[self.sentences_vocab.unk_token]] = 1
+                one_hot[self.sentences_vocab.lookup_token(self.sentences_vocab.unk_token)] = 1
 
         return one_hot
 
