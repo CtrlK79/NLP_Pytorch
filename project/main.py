@@ -15,7 +15,7 @@ df = pd.read_csv('dataset.csv')
 dataset_df = dataset(df)
 
 # case flag
-case = 1
+case = 2
 
 if case == 1:
     model = FCN_1(input_features = len(dataset_df.vectorizer.sentences_vocab.token_to_idx), output_features = len(dataset_df.vectorizer.emotions_vocab.token_to_idx))
