@@ -109,6 +109,93 @@ class Vectorizer(object):
 #for idx in np.where(v!=0)[0]:
 #    print('Index:', idx, ', Word: ', vec.sentences_vocab.idx_to_token[idx])
 
+class CNN_Vectorizer(object):
+    def __init__(self, sentences_vocab, emotions_vocab, max_length):
+        self.sentences_vocab = sentences_vocab
+        self.emotions_vocab = emotions_vocab
+        self._max_length = max_length
+
+    @classmethod
+    def from_dataframe(cls, df, count = 3):
+        train_dataset = df.loc[df['split']=='train', :]
+
+        sentences_vocab = Vocabulary()
+        emotions_vocab = Vocabulary(add_unk = False)
+        max_length = 0
+        length_temp = 0
+
+        for emotion in sorted(set(train_dataset.Emotion)):
+            emotions_vocab.add_token(emotion)
+
+        counter = Counter()
+        for sentence in train_dataset.Sentence:
+            for token in sentence.split(" "):
+                counter[token] += 1
+                length_temp += 1
+            if max_length < length_temp:
+                max_length = length_temp
+            length_temp = 0
+
+        for token, num in counter.items():
+            if num >= count:
+                sentences_vocab.add_token(token)
+
+        return cls(sentences_vocab, emotions_vocab, max_length)
+
+    def vectorize(self, sentence):
+        one_hot_matrix_size = (len(self.sentences_vocab.token_to_idx), self._max_length)
+        one_hot_matrix = np.zeros(one_hot_matrix_size, dtype=np.float32)
+        index = 0
+
+        for word in sentence.split(" "):
+            if word in self.sentences_vocab.token_to_idx:
+                one_hot_matrix[self.sentences_vocab.lookup_token(word), index] = 1
+            else:
+                one_hot_matrix[self.sentences_vocab.lookup_token(self.sentences_vocab.unk_token), index] = 1
+            index += 1
+
+        return one_hot_matrix
+
+    def to_serializable(self):
+        return {
+        'sentences_vocab' : self.sentences_vocab,
+        'emotions_vocab' : self.emotions_vocab
+        }
+
+    @classmethod
+    def from_serializable(cls, serializable):
+        return cls(**serializable)
+
+#Debugging
+#df = pd.read_csv('dataset.csv')
+#vec = CNN_Vectorizer.from_dataframe(df)
+#print(vec.sentences_vocab.token_to_idx)
+#v = vec.vectorize('do you have any specific plan to do that')
+#print(v.shape)
+#print(np.where(v!=0))
+#for idx in np.where(v!=0)[0]:
+#    print('Index:', idx, ', Word: ', vec.sentences_vocab.idx_to_token[idx])
+
+class CNN_dataset(Dataset):
+    def __init__(self, df, split = 'train'):
+        self.split = split
+        self.df = df
+        self.vectorizer = CNN_Vectorizer.from_dataframe(self.df.loc[df['split']=='train', :])
+        self.target_df = self.df.loc[self.df['split']==split, :]
+
+    def select_split(self, split):
+        self.target_df = self.df.loc[self.df['split']==split, :]
+
+    def __len__(self):
+        return len(self.target_df)
+
+    def __getitem__(self, idx):
+        return {
+        'x_data' : self.vectorizer.vectorize(self.target_df.iloc[idx, 0]),
+        'y_target' : self.vectorizer.emotions_vocab.token_to_idx[self.target_df.iloc[idx, 1]]
+        }
+
+
 class dataset(Dataset):
     def __init__(self, df, split = 'train'):
         self.split = split

@@ -7,48 +7,22 @@ from torch.utils.data import Dataset, DataLoader
 #from torchsummary import summary
 from tqdm import tqdm
 
-from classifiers import FCN_1, FCN_2, FCN_3, FCN_4, FCN_5, CNN_1
-from tools import Vocabulary, Vectorizer, dataset
+from classifiers import CNN_1
+from tools import Vocabulary, CNN_Vectorizer, Vectorizer, CNN_dataset, dataset
 
 # Load dataset
 df = pd.read_csv('dataset.csv')
-dataset_df = dataset(df)
+dataset_df = CNN_dataset(df)
 
 # case flag
-case = 5
+case = 1
 
 if case == 1:
-    model = FCN_1(input_features = len(dataset_df.vectorizer.sentences_vocab.token_to_idx), output_features = len(dataset_df.vectorizer.emotions_vocab.token_to_idx))
+    model = CNN_1(initial_num_channels = len(dataset_df.vectorizer.sentences_vocab.token_to_idx), output_features = len(dataset_df.vectorizer.emotions_vocab.token_to_idx))
     loss_fn = nn.CrossEntropyLoss()
     optim = torch.optim.Adam(model.parameters(), lr = 0.01)
     epochs = 5
-
-elif case == 2:
-    model = FCN_2(input_features = len(dataset_df.vectorizer.sentences_vocab.token_to_idx), output_features = len(dataset_df.vectorizer.emotions_vocab.token_to_idx))
-    loss_fn = nn.CrossEntropyLoss()
-    optim = torch.optim.Adam(model.parameters(), lr = 0.01)
-    epochs = 5
-
-elif case == 3:
-    model = FCN_3(input_features = len(dataset_df.vectorizer.sentences_vocab.token_to_idx), output_features = len(dataset_df.vectorizer.emotions_vocab.token_to_idx))
-    loss_fn = nn.CrossEntropyLoss()
-    optim = torch.optim.Adam(model.parameters(), lr = 0.001)
-    epochs = 10
-
-elif case == 4:
-    model = FCN_4(input_features = len(dataset_df.vectorizer.sentences_vocab.token_to_idx), output_features = len(dataset_df.vectorizer.emotions_vocab.token_to_idx))
-    loss_fn = nn.CrossEntropyLoss()
-    optim = torch.optim.Adam(model.parameters(), lr = 0.001)
-    epochs = 10
-
-elif case == 5:
-    model = FCN_5(input_features = len(dataset_df.vectorizer.sentences_vocab.token_to_idx), output_features = len(dataset_df.vectorizer.emotions_vocab.token_to_idx))
-    loss_fn = nn.CrossEntropyLoss()
-    optim = torch.optim.Adam(model.parameters(), lr = 0.001)
-    epochs = 10
-
-elif case == 6:
-    model = CNN_1()
+    
 
 print("----------model #{} start!----------".format(case))
 batch_size = 128
