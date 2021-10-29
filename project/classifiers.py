@@ -220,26 +220,58 @@ class FCN_5(nn.Module): # with 6 hidden layers and dropout, sigmoid
         return x
 
 class CNN_1(nn.Module):
-    def __init__(self, initial_num_channels, output_features):
+    def __init__(self, initial_num_channels, output_features, max_length):
         super(CNN_1, self).__init__()
         self.convnet = nn.Sequential(
-            nn.Conv1d(in_channels = initial_num_channels, out_channels = initial_num_channels * 2, kernel_size = 3),
+            nn.Conv1d(in_channels = initial_num_channels, out_channels = 64, kernel_size = 3, stride = 2),
+            nn.Dropout(p = 0.3),
             nn.ELU(),
 
-            nn.Conv1d(in_channels = initial_num_channels * 2, out_channels = initial_num_channels * 4, kernel_size = 3),
+            nn.Conv1d(in_channels = 64, out_channels = 128, kernel_size = 3, stride = 2),
+            nn.Dropout(p = 0.3),
             nn.ELU(),
 
-            nn.Conv1d(in_channels = initial_num_channels * 4, out_channels = initial_num_channels * 8, kernel_size = 3),
+            nn.Conv1d(in_channels = 128, out_channels = 256, kernel_size = 3, stride = 2),
+            nn.Dropout(p = 0.3),
             nn.ELU(),
         )
-        self.fc = nn.Linear(initial_num_channels * 8, output_features)
+        self.flatten = nn.Flatten()
+        self.length = round((round((round((max_length - 3)/2)+1-3)/2)+1-3)/2)+1
+        self.fc = nn.Linear(256 * self.length, output_features)
     
     def forward(self, x):
        x = self.convnet(x).squeeze(dim = 2)
+       x = self.flatten(x)
        x = self.fc(x)
 
        return x
 
+class CNN_2(nn.Module):
+    def __init__(self, initial_num_channels, output_features, max_length):
+        super(CNN_2, self).__init__()
+        self.convnet = nn.Sequential(
+            nn.Conv1d(in_channels = initial_num_channels, out_channels = 64, kernel_size = 3, stride = 2),
+            nn.Dropout(p = 0.3),
+            nn.ReLU(),
+
+            nn.Conv1d(in_channels = 64, out_channels = 128, kernel_size = 3, stride = 2),
+            nn.Dropout(p = 0.3),
+            nn.ReLU(),
+
+            nn.Conv1d(in_channels = 128, out_channels = 256, kernel_size = 3, stride = 2),
+            nn.Dropout(p = 0.3),
+            nn.ReLU(),
+        )
+        self.flatten = nn.Flatten()
+        self.length = round((round((round((max_length - 3)/2)+1-3)/2)+1-3)/2)+1
+        self.fc = nn.Linear(256 * self.length, output_features)
+    
+    def forward(self, x):
+       x = self.convnet(x).squeeze(dim = 2)
+       x = self.flatten(x)
+       x = self.fc(x)
+
+       return x
 #class RNN(nn.Module):
 #    def __init__(self, input_features, output_features):
 #

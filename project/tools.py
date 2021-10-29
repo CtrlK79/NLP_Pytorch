@@ -216,10 +216,15 @@ class dataset(Dataset):
         }
 
 #Debugging
+#from classifiers import CNN_1
 #df = pd.read_csv('dataset.csv')
-#dataset_df = dataset(df = df, split = 'test')
+#dataset_df = CNN_dataset(df = df, split = 'test')
 #dataloader_df = DataLoader(dataset_df, batch_size = 64, drop_last = False)
+#cnn = CNN_1(len(dataset_df.vectorizer.sentences_vocab.token_to_idx), len(dataset_df.vectorizer.emotions_vocab.token_to_idx))
 #for data in dataloader_df:
 #    print('x_data: ', data['x_data'], ', shape: ', data['x_data'].shape)
 #    print('y_target: ', data['y_target'], ', shape: ', data['y_target'].shape)
+#    print("sentence_vocab_size: ", len(dataset_df.vectorizer.sentences_vocab.token_to_idx))
 #    print('1 iter ends')
+#    print("CNN Result: ", cnn.convnet(data['x_data']).squeeze(dim = 2).shape)
+#    print("CNN Result2: ", cnn(data['x_data']).shape)

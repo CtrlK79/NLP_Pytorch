@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 #from torchsummary import summary
 from tqdm import tqdm
 
-from classifiers import CNN_1
+from classifiers import CNN_1, CNN_2
 from tools import Vocabulary, CNN_Vectorizer, Vectorizer, CNN_dataset, dataset
 
 # Load dataset
@@ -18,11 +18,16 @@ dataset_df = CNN_dataset(df)
 case = 1
 
 if case == 1:
-    model = CNN_1(initial_num_channels = len(dataset_df.vectorizer.sentences_vocab.token_to_idx), output_features = len(dataset_df.vectorizer.emotions_vocab.token_to_idx))
+    model = CNN_1(initial_num_channels = len(dataset_df.vectorizer.sentences_vocab.idx_to_token), output_features = len(dataset_df.vectorizer.emotions_vocab.idx_to_token), max_length = dataset_df.vectorizer._max_length)
     loss_fn = nn.CrossEntropyLoss()
     optim = torch.optim.Adam(model.parameters(), lr = 0.01)
     epochs = 5
-    
+
+elif case == 2:
+    model = CNN_2(initial_num_channels = len(dataset_df.vectorizer.sentences_vocab.idx_to_token), output_features = len(dataset_df.vectorizer.emotions_vocab.idx_to_token), max_length = dataset_df.vectorizer._max_length)
+    loss_fn = nn.CrossEntropyLoss()
+    optim = torch.optim.Adam(model.parameters(), lr = 0.01)
+    epochs = 5
 
 print("----------model #{} start!----------".format(case))
 batch_size = 128
